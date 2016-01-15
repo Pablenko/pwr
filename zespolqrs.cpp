@@ -168,7 +168,7 @@ private:
                     {
                         slope_criterion = slope_criterion_min;
                     }
-                    else if(slope_scriterion > slope_criterion_max)
+                    else if(slope_criterion > slope_criterion_max)
                     {
                         slope_criterion = slope_criterion_max;
                     }
