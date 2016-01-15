@@ -6,12 +6,12 @@
 class qrs_analyzer
 {
 public:
-    qrs_analyzer() : file_name(), number_of_signals(0), slope_criterion_min(0),
+    qrs_analyzer(const std::string& f_name) : file_name(), number_of_signals(0), slope_criterion_min(0),
         annotation_info(), result_annotation(), slope_criterion_max(0), slope_criterion(0),
         slope_number(0), number_of_160ms_intervals(0), max_time(0), number_of_200ms_intervals(0),
         number_of_2s_intervals(0), filter(0), time(0), qtime(0), sign(0), maxslope(0)
     {
-        read_file_name();
+        file_name = f_name;
         get_number_of_signals();
         fill_signal_info();
         fill_result_annotation();
@@ -21,7 +21,6 @@ public:
     {
         delete[] info;
         delete[] samples;
-        wfdbquit();
     }
 
     void execute()
@@ -34,11 +33,6 @@ public:
         qrs_detection_algorithm();
     }
 private:
-    void read_file_name()
-    {
-        std::cout << "Provide file name with record:\n";
-        std::cin >> file_name; 
-    }
 
     void get_number_of_signals()
     {
@@ -239,8 +233,41 @@ private:
     int maxslope;
 };
 
+std::string read_file_name()
+{
+    std::string file_name;
+    std::cout << "Provide file name with record:\n";
+    std::cin >> file_name;
+    return file_name; 
+}
+
+void print_annotation(const std::string& ann_name, const std::string& record_name)
+{
+    WFDB_Anninfo a;
+    WFDB_Annotation annotation;
+
+    a.name = const_cast<char*>(ann_name.c_str());
+    a.stat = WFDB_READ;
+    (void)sampfreq(const_cast<char*>(record_name.c_str()));
+    if(annopen(const_cast<char*>(record_name.c_str()), &a, 1) < 0)
+    {
+        exit(1);
+    }
+    while(getann(0, &annotation) == 0)
+    {
+        std::cout << timstr(-(annotation.time)) << " ";
+        std::cout << annotation.time << " ";
+        std::cout << annstr(annotation.anntyp) << " ";
+        std::cout << annotation.subtyp << " " << annotation.chan << " ";
+        std::cout << annotation.num << std::endl;
+    }
+}
+
 int main()
 {
-    qrs_analyzer analyzer;
+    auto name = read_file_name();
+    qrs_analyzer analyzer(name);
     analyzer.execute();
+    print_annotation("qrs", name);
+    wfdbquit();
 }
