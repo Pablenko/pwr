@@ -48,7 +48,7 @@ private:
     void fill_signal_info()
     {
         info = new WFDB_Siginfo[number_of_signals];
-        samples = new WFDB_Samples[number_of_signals];
+        samples = new WFDB_Sample[number_of_signals];
         if(isigopen(const_cast<char*>(file_name.c_str()), info, number_of_signals)
             != number_of_signals)
         {
@@ -108,7 +108,7 @@ private:
     WFDB_Sample* samples;
     WFDB_Siginfo* info;
     WFDB_Anninfo annotation_info;
-    WFDB_Ammotation result_annotation;
+    WFDB_Annotation result_annotation;
     int slope_criterion_min;
     int slope_criterion_max;
     int number_of_160ms_intervals;
