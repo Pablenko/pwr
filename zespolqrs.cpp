@@ -1,5 +1,6 @@
 #include <iostream>
 #include <wfdb/wfdb.h>
+#include <wfdb/ecgcodes.h>
 #include <vector>
 
 class qrs_analyzer
@@ -8,7 +9,7 @@ public:
     qrs_analyzer() : file_name(), number_of_signals(0), slope_criterion_min(0),
         annotation_info(), result_annotation(), slope_criterion_max(0), slope_criterion(0),
         slope_number(0), number_of_160ms_intervals(0), max_time(0), number_of_200ms_intervals(0),
-        number_of_2s_intervals(0), filter(0), time(0), qtime(0), sign(0)
+        number_of_2s_intervals(0), filter(0), time(0), qtime(0), sign(0), maxslope(0)
     {
         read_file_name();
         get_number_of_signals();
@@ -147,10 +148,57 @@ private:
 
     void check_qrs_complex()
     {
+        if(slope_number != 0)
+        {
+            if(filter*sign < -slope_criterion)
+            {
+                sign = -sign;
+                max_time = (++slope_number > 4) ? number_of_200ms_intervals : number_of_160ms_intervals;
+            }
+            else if(filter * sign > slope_criterion && abs(filter) > maxslope)
+            {
+                maxslope = abs(filter);
+            }
+            if(max_time-- < 0)
+            {
+                if(slope_number >= 2 && slope_number <= 4)
+                {
+                    slope_criterion += ((maxslope>>2) - slope_criterion) >> 3;
+                    if(slope_criterion < slope_criterion_min)
+                    {
+                        slope_criterion = slope_criterion_min;
+                    }
+                    else if(slope_scriterion > slope_criterion_max)
+                    {
+                        slope_criterion = slope_criterion_max;
+                    }
+                    result_annotation.time = strtim("i") - (time-qtime) -4;
+                    result_annotation.anntyp = NORMAL;
+                    (void)putann(0, &result_annotation);
+                    time = 0;
+                }
+                else if(slope_number >=5)
+                {
+                    result_annotation.time = strtim("i") - (time-qtime) - 4;
+                    result_annotation.anntyp = ARFCT;
+                    (void)putann(0, &result_annotation);
+                }
+                slope_number = 0;
+            }
+        }
     }
 
     void update_samples()
     {
+        sample10 = sample9;
+        sample9 = sample8;
+        sample8 = sample7;
+        sample7 = sample6;
+        sample6 = sample5;
+        sample5 = sample4;
+        sample4 = sample3;
+        sample3 = sample2;
+        sample2 = sample1;
     }
 
     void qrs_detection_algorithm()
@@ -187,6 +235,7 @@ private:
     int time;
     int qtime;
     int sign;
+    int maxslope;
 };
 
 int main()
