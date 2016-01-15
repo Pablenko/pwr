@@ -89,7 +89,7 @@ private:
     void getsc_min_max()
     {
         slope_criterion_min = muvadu(0, 1000);
-        slope_criterion_max = 10 * slope_criterion_min;
+        slope_criterion = slope_criterion_max = 10 * slope_criterion_min;
     }
 
     void get_sample_intervals()
@@ -124,7 +124,7 @@ private:
                     slope_criterion = slope_criterion_min;
                 }
             }
-            else if(slope_number > 5)
+            else if(slope_number >= 5)
             {
                 slope_criterion += slope_criterion >> 4;
                 if(slope_criterion > slope_criterion_max)
@@ -199,6 +199,7 @@ private:
         sample4 = sample3;
         sample3 = sample2;
         sample2 = sample1;
+        time++;
     }
 
     void qrs_detection_algorithm()
