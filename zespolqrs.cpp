@@ -6,8 +6,9 @@ class qrs_analyzer
 {
 public:
     qrs_analyzer() : file_name(), number_of_signals(0), slope_criterion_min(0),
-        annotation_info(), result_annotation(), slope_criterion_max(0), number_of_160ms_intervals(0),
-        number_of_200ms_intervals(0), number_of_2s_intervals(0)
+        annotation_info(), result_annotation(), slope_criterion_max(0), slope_criterion(0),
+        slope_number(0), number_of_160ms_intervals(0), max_time(0), number_of_200ms_intervals(0),
+        number_of_2s_intervals(0), filter(0), time(0), qtime(0), sign(0)
     {
         read_file_name();
         get_number_of_signals();
@@ -19,6 +20,7 @@ public:
     {
         delete[] info;
         delete[] samples;
+        wfdbquit();
     }
 
     void execute()
@@ -28,6 +30,7 @@ public:
         getsc_min_max();
         get_sample_intervals();
         init_samples();
+        qrs_detection_algorithm();
     }
 private:
     void read_file_name()
@@ -102,6 +105,67 @@ private:
             = sample9 = sample10 = samples[0];
     }
 
+    void count_filter()
+    {
+        filter = (sample1 = samples[0]) + 4*sample2 + 6*sample3 + 4*sample4 + sample5
+            -sample6 - 4*sample7 - 6*sample8 - 4*sample9 - sample10;
+    }
+
+    void adjust_threshold()
+    {
+        if(time % number_of_2s_intervals == 0)
+        {
+            if(slope_number == 0)
+            {
+                slope_criterion -= slope_criterion >> 4;
+                if(slope_criterion < slope_criterion_min)
+                {
+                    slope_criterion = slope_criterion_min;
+                }
+            }
+            else if(slope_number > 5)
+            {
+                slope_criterion += slope_criterion >> 4;
+                if(slope_criterion > slope_criterion_max)
+                {
+                    slope_criterion = slope_criterion_max;
+                }
+            }
+        }
+    }
+
+    void check_slope_found()
+    {
+        if(slope_number == 0 && abs(filter) > slope_criterion)
+        {
+            slope_number = 1;
+            max_time = number_of_160ms_intervals;
+            sign = (filter>0) ? 1:-1;
+            qtime = time;
+        }
+    }
+
+    void check_qrs_complex()
+    {
+    }
+
+    void update_samples()
+    {
+    }
+
+    void qrs_detection_algorithm()
+    {
+        do
+        {
+            count_filter();
+            adjust_threshold();
+            check_slope_found();
+            check_qrs_complex();
+            update_samples();
+        }
+        while(getvec(samples) > 0);
+    }
+
 private:
     std::string file_name;
     size_t number_of_signals;
@@ -111,11 +175,18 @@ private:
     WFDB_Annotation result_annotation;
     int slope_criterion_min;
     int slope_criterion_max;
+    int slope_criterion;
+    int slope_number;
     int number_of_160ms_intervals;
     int number_of_200ms_intervals;
     int number_of_2s_intervals;
+    int max_time;
     int sample1, sample2, sample3, sample4, sample5, sample6,
         sample7, sample8, sample9, sample10;
+    int filter;
+    int time;
+    int qtime;
+    int sign;
 };
 
 int main()
