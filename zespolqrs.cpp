@@ -253,13 +253,11 @@ void print_annotation(const std::string& ann_name, const std::string& record_nam
     {
         exit(1);
     }
+    std::cout << "Wykryte zespoly QRS:" << std::endl;
     while(getann(0, &annotation) == 0)
     {
-        std::cout << timstr(-(annotation.time)) << " ";
-        std::cout << annotation.time << " ";
-        std::cout << annstr(annotation.anntyp) << " ";
-        std::cout << annotation.subtyp << " " << annotation.chan << " ";
-        std::cout << annotation.num << std::endl;
+        std::cout << "Czas: " << timstr(-(annotation.time)) << " ";
+        std::cout << "Number probki: " <<  annotation.time << std::endl;
     }
 }
 
